@@ -5,7 +5,7 @@ const Schema = mongoose.Schema; // to easily access mongoose Schema class proper
 const LocationSchema = new Schema({
   state: { type: String, required: true, maxLength: 20 },
   address: { type: String, required: true, maxLength: 50 },
-  store: { type: Schema.Types.ObjectId, ref: "Store", required: true },
+
   phoneNumber: { type: String, required: true, maxLength: 15 },
   open: [
     {
