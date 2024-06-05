@@ -10,7 +10,7 @@ const MaterialSchema = new Schema({
 });
 
 MaterialSchema.virtual("url").get(function () {
-  return `/catalog/material/${this._id}`;
+  return `/store/material/${this._id}`;
 });
 
 module.exports = mongoose.model("Material", MaterialSchema);

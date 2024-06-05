@@ -1,7 +1,35 @@
 doctype html
-html
+html(lang="en")
   head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    link(rel="stylesheet", href="/stylesheets/style.css")
     title= title
-    link(rel='stylesheet', href='/stylesheets/style.css')
-  body
-    block content
+  body 
+    header.header
+      h1= title
+    div.container
+      div(class='sidebar')
+        block sidebar
+          ul.navigation 
+            li
+              a(href='/') Homepage
+            li 
+              a(href='/store/category') Categories
+            li
+              a(href='/store/material') Materials
+            li  
+              a(href='/store/location') Locations    
+            li  
+              hr
+            li 
+              a(href="/store/category/create") Create Category
+            li  
+              a(href="/store/material/create") Create Material
+            li
+              a(href="/store/location/create") Create Location
+      div(class='content')
+        block content
+    footer.footer
+      a(href='') Brent-The-Carpenter 
+        p &copy; #{date} 

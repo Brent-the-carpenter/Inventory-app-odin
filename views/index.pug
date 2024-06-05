@@ -1,5 +1,22 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  
+  h2 Welcome to #{title}
+  div 
+    h3 #[strong About]
+    p This is a #[em simple] inventory management system for a building materials store.
+  div 
+    h3 #[strong Inventory]
+    p The inventory is divided into three main categories:
+    ul
+      li There is a total of #{category_count} 
+        a(href="/store/category") Categories 
+        span to choose from.
+      li There is a total of #{material_count} 
+        a(href="/store/material") Materials
+        span  across all categories.
+      li There is a total of #{location_count} 
+        a(href="/store/location") Locations
+        span  to buy materials from.
+    

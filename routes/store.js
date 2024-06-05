@@ -1,16 +1,12 @@
 const express = require("express");
-const category = require("../models/category");
-
 const router = express.Router();
 
+// Bring in all controller modules.
 const category_controller = require("../controllers/categoryController");
 const location_controller = require("../controllers/locationController");
 const material_controller = require("../controllers/materialController");
-const store_controller = require("../controllers/storeController");
-/// CATEGORY ROUTES ///
 
-// GET store homepage
-router.get("/", store_controller.index);
+/// CATEGORY ROUTES ///
 
 // GET/POST request for creating category
 router.get("/category/create", category_controller.category_create_get);

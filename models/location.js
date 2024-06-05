@@ -25,7 +25,7 @@ const LocationSchema = new Schema({
 });
 
 LocationSchema.virtual("url").get(function () {
-  return `/catalog/location/${this._id}`;
+  return `/store/location/${this._id}`;
 });
 
 module.exports = mongoose.model("Location", LocationSchema);
