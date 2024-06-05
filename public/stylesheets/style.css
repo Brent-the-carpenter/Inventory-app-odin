@@ -1,17 +1,13 @@
-html {
-  padding: 0px;
-  margin: 0px;
-  /* width: 100vw; */
+html,
+body {
+  padding: 0;
+  margin: 0;
   height: 100%;
+  width: 100%;
+  font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+  font-size: 14px;
 }
 
-body {
-  width: 100%;
-  height: 100%;
-  margin: 0px;
-  padding: 0px;
-  font: 14px, "Lucida Grande", Helvetica, Arial, sans-serif;
-}
 .header {
   display: flex;
   justify-content: center;
@@ -19,41 +15,109 @@ body {
   background-color: rgba(60, 100, 100, 0.5);
   text-align: center;
   height: 75px;
-  h1 {
-    margin: 0px;
-    color: aliceblue;
-  }
+}
+
+.header h1 {
+  margin: 0;
+  color: aliceblue;
+}
+
+p {
+  font-size: 14px;
 }
 
 a {
   color: #00b7ff;
+  text-decoration: none;
 }
+
 a:hover {
   color: #19485a;
 }
+
 .container {
   display: grid;
-  grid-column: 0.5fr 10fr;
+  grid-template-columns: 2fr 10fr;
   grid-auto-flow: column;
   gap: 20px;
 }
+
 ul {
   display: flex;
   flex-direction: column;
   gap: 20px;
   list-style-type: none;
   padding: 20px;
-  margin: 0px;
+  margin: 0;
 }
+
 .sidebar {
+  grid-column: 1 / 2;
   border-right: 2px solid rgba(0, 0, 0, 0.5);
 }
+
 .content {
+  grid-column: 2 / 3;
   font-size: 14px;
-  a {
-    text-decoration: none;
-  }
 }
+/* Container for forms */
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+/* Form element styling */
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Labels for form elements */
+.form-label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Styling for submit button */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
 .footer {
   display: flex;
   justify-content: center;
@@ -61,7 +125,4 @@ ul {
   position: fixed;
   bottom: 0;
   width: 100%;
-  a {
-    text-decoration: none;
-  }
 }

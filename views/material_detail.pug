@@ -1,0 +1,21 @@
+extends layout 
+
+block content 
+    h1=page_title 
+   
+    div.material-detail 
+    h2 Name: #{material.name}
+    if(material)
+
+        ul 
+            li #[strong Category:] 
+                |&nbsp;
+                a(href=material.category.url) #{material.category.name}
+                li #{material.stock} units in stock 
+                li $#{material.price} per unit
+    else 
+        p Material not found
+    p 
+        a(href=`${material.url}/update`) Update Material   
+    p 
+        a(href=`${material.url}/delete`) Delete Material

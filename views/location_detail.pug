@@ -1,0 +1,33 @@
+extends layout
+
+block content
+  h1= page_title
+
+  p Below is the detail of the location you selected.
+  hr
+
+  p We are located at
+    | #[strong #{location.address}, #{location.state}]
+  p Our phone number is #[strong #{location.phoneNumber}]
+
+  if location.open
+    p We are open on
+      ul
+        each day in formatted_schedule
+          li
+            | #{day} 
+            if day.includes('Open')
+              |&nbsp;
+              if day.startsWith('Saturday') || day.startsWith('Sunday')
+                |from #[strong 9:00 A.M] to #[strong 8:00 P.M]
+              else
+                |from #[strong 8:00 A.M] to #[strong 9:00 P.M]
+            
+  else
+    p This location is closed for the time being.
+  div 
+    p
+      a(href=`${location.url}/update`) Update Location
+    p
+      a(href=`${location.url}/delete`) Delete Location
+

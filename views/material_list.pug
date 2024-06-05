@@ -1,0 +1,18 @@
+extends layout 
+
+
+
+block content
+  h1= page_title
+  hr
+  div.material-list
+    if material_list && material_list.length > 0
+      each material in material_list
+        div
+          p
+            a(href=material.url) #{material.name}
+        
+    else
+      p No materials found.
+
+       

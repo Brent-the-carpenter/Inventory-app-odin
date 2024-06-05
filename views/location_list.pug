@@ -1,0 +1,14 @@
+extends layout 
+
+block content 
+  h1= page_title 
+  hr
+
+  if count_by_state
+    each state in count_by_state
+      p There is #{state.count} locations in #{state._id}
+      ul
+        each location in state.locations
+          li Address: 
+            a(href='/store/location/'+ location._id) #{location.address}
+          li Phone number: #{location.phoneNumber}

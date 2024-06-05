@@ -2,21 +2,22 @@ extends layout
 
 block content
   h2= page_title
-    div 
+
+  div 
       
-        p The following is a list of all the categories in the inventory.
-        hr
-    div
+   
+    hr
+  div
     
-        if(category_list)
-            ul 
-                each category in category_list
-                    li 
-                        a(href=category.url) #{category.name}
-                        p #{category.summary}
-                        hr    
-        else
-            p No categories found.
+    if(category_list)
+        ul 
+            each category in category_list
+                li 
+                    a(href=category.url) #{category.name}
+                    p #{category.summary}
+                    hr    
+    else
+        p No categories found.
 
         
 

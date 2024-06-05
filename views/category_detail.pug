@@ -1,0 +1,28 @@
+extends layout 
+
+block content 
+    h1=page_title 
+
+    h2  #{category.name}
+
+    p #[strong Summary] 
+        br
+        | #{category.summary}
+    hr
+    if(category.materials)
+        p #[strong Material in this category]
+            
+            ul
+                each material in category.materials
+                    li 
+                        a(href=material.url) #{material.name}
+        hr
+    else
+        p #[strong No material in this category.]
+    p
+        a(href=`/store/category/${category._id}/update`) Update Category
+    
+    p
+        a(href=`/store/category/${category._id}/delete`) Delete Category
+        
+
