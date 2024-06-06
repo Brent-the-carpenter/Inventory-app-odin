@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "dev": "node --watch --env-file=.env ./bin/www",
-    "serverstart": "DEBUG=inventory-app:server,app:category,app:db,app:location npm run dev"
+    "serverstart": "DEBUG=inventory-app:server,app:category,app:db,app:location,app:material npm run dev"
   },
   "dependencies": {
     "compression": "^1.7.4",

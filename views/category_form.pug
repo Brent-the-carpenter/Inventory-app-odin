@@ -1,0 +1,33 @@
+extends layout
+
+block content
+  h1= page_title
+
+  form.form-container(method='POST')
+    .form-control
+      label.form-label(for='name') Name:
+      input.form-input(type='text', name='name', placeholder='Name', value= category ? category.name : '', required)
+
+    .form-control
+      label.form-label(for='summary') Summary
+      textarea.form-input(name='summary', required)= category ? category.summary : ''
+
+    .form-control
+      label.form-label Material:
+      div
+        each material in materials
+          div
+            if material.checked
+              input(type='checkbox', name='material', value=material._id, checked)
+            else
+              input(type='checkbox', name='material', value=material._id)
+            label(for=material._id) #{material.name}
+
+    button.btn.btn-primary(type='submit') Submit
+
+  if errors
+    ul.errors
+      each error in errors
+        li!= error.msg
+
+                    

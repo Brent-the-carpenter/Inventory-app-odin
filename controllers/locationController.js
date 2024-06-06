@@ -52,7 +52,12 @@ exports.location_detail = asyncHandler(async (req, res, next) => {
     formatted_schedule: formatted_schedule,
   });
 });
-exports.location_get_create = asyncHandler(async (req, res, next) => {});
+exports.location_get_create = asyncHandler(async (req, res, next) => {
+  res.render("location_form", {
+    page_title: "Create Location",
+    days: daysOfWeek,
+  });
+});
 exports.location_post_create = asyncHandler(async (req, res, next) => {});
 exports.location_get_delete = asyncHandler(async (req, res, next) => {});
 exports.location_post_delete = asyncHandler(async (req, res, next) => {});

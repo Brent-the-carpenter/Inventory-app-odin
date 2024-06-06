@@ -30,7 +30,14 @@ exports.category_detail = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.category_create_get = asyncHandler(async (req, res, next) => {});
+exports.category_create_get = asyncHandler(async (req, res, next) => {
+  debug("We are in the route controller");
+  const materials = await Material.find({}).sort({ name: 1 }).exec();
+  res.render("category_form", {
+    page_title: "Create Category",
+    materials: materials,
+  });
+});
 
 exports.category_create_post = asyncHandler(async (req, res, next) => {});
 

@@ -30,7 +30,17 @@ exports.material_detail = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.material_get_create = asyncHandler(async (req, res, next) => {});
+exports.material_get_create = asyncHandler(async (req, res, next) => {
+  const categories = await Category.find({})
+    .sort({ name: 1 })
+    .populate("materials")
+    .exec();
+  debug(categories);
+  res.render("material_form", {
+    page_title: "Create Material",
+    categories: categories,
+  });
+});
 
 exports.material_post_create = asyncHandler(async (req, res, next) => {});
 
