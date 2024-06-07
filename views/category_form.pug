@@ -23,11 +23,15 @@ block content
               input(type='checkbox', name='material', value=material._id)
             label(for=material._id) #{material.name}
 
+    div
+      label.form-label(for='store') 
+      input.form-input(type='hidden', name='store', value= store ? store._id : category.store._id)
+
     button.btn.btn-primary(type='submit') Submit
 
   if errors
     ul.errors
       each error in errors
-        li!= error.msg
+        li= error.msg
 
                     

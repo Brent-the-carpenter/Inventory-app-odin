@@ -4,13 +4,18 @@ block content
   h1= page_title
 
   form.form-container(method='POST')
-    .form-control 
-      label.form-label(for='state') State:
-      input.form-input(type='text', name='state', placeholder='State', value= location ? location.state : '', required)
-
+   
     .form-control 
       label.form-label(for='address') Address:
       input.form-input(type='text', name='address', placeholder='Address', value= location ? location.address : '', required)
+
+    .form-control 
+      label.form-label(for='zip') Zip Code:
+      input.form-input(type='text', name='zip', placeholder='Zip Code', value= location && location.zip ? location.zip : '', required)
+
+    .form-control 
+      label.form-label(for='state') State:
+      input.form-input(type='text', name='state', placeholder='GA', value= location ? location.state : '', required)
 
     .form-control
       label.form-label(for='phoneNumber') Phone Number:

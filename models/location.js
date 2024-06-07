@@ -22,6 +22,7 @@ const LocationSchema = new Schema({
       maxlength: 9,
     },
   ],
+  zip: { type: String, required: true, maxLength: 10 },
 });
 
 LocationSchema.virtual("url").get(function () {

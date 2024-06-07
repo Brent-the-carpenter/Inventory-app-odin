@@ -32,14 +32,76 @@ exports.category_detail = asyncHandler(async (req, res, next) => {
 
 exports.category_create_get = asyncHandler(async (req, res, next) => {
   debug("We are in the route controller");
-  const materials = await Material.find({}).sort({ name: 1 }).exec();
+  const [materials, store] = await Promise.all([
+    Material.find({}).sort({ name: 1 }).exec(),
+    Store.findOne({}).exec(),
+  ]);
+  debug(store._id);
   res.render("category_form", {
     page_title: "Create Category",
     materials: materials,
+    store: store,
   });
 });
 
-exports.category_create_post = asyncHandler(async (req, res, next) => {});
+exports.category_create_post = [
+  body("name", "Name is a required field.")
+    .trim()
+    .escape()
+    .isLength({ min: 3 })
+    .withMessage("Name must be at least three characters long.")
+    .isAlpha()
+    .withMessage("Name must only contain Alpha Charecters."),
+  body("summary", "Summary of category is Required.")
+    .trim()
+    .escape()
+    .isLength({ min: 10, max: 300 })
+    .withMessage("Summary must be between 10 and 200 characters."),
+  body("store").trim().escape(),
+  body("material.*").escape(),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    const category = new Category({
+      name: req.body.name,
+      summary: req.body.summary,
+      materials: req.body.material,
+      store: req.body.store,
+    });
+    const checkForCategoryName = await Category.find({
+      name: category.name,
+    }).exec();
+    if (checkForCategoryName.length) {
+      errors.errors.push({
+        value: category.name,
+        msg: "Category with this name already exists",
+        param: "name",
+        location: "body",
+      });
+    }
+    if (!errors.isEmpty()) {
+      const materials = await Material.find({}).sort({ name: 1 }).exec();
+
+      for (const material of materials) {
+        if (
+          category.materials &&
+          category.materials.includes(material._id.toString())
+        ) {
+          material.checked = "true";
+        }
+      }
+      debug("we get to here in the function", errors);
+      return res.render("category_form", {
+        page_title: "Create Category",
+        materials: materials,
+        category: category,
+        errors: errors.array(),
+      });
+    } else {
+      await category.save();
+      res.redirect(category.url);
+    }
+  }),
+];
 
 exports.category_get_delete = asyncHandler(async (req, res, next) => {});
 

@@ -1,7 +1,7 @@
 const Location = require("../models/location");
 const debug = require("debug")("app:location");
 const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
+const { body, validationResult, param } = require("express-validator");
 
 const daysOfWeek = [
   "Sunday",
@@ -58,7 +58,58 @@ exports.location_get_create = asyncHandler(async (req, res, next) => {
     days: daysOfWeek,
   });
 });
-exports.location_post_create = asyncHandler(async (req, res, next) => {});
+exports.location_post_create = [
+  (req, res, next) => {
+    if (!Array.isArray(req.body.open)) {
+      typeof req.body.open === "undefined" ? [] : [req.body.open];
+    }
+    next();
+  },
+
+  body("state", "State is required.")
+    .trim()
+    .escape()
+    .isLength({ min: 2, max: 2 })
+    .withMessage("please abbrivate state."),
+  body("address", "Address is required.").trim().isLength({ min: 6 }).escape(),
+  body("phoneNumber")
+    .trim()
+    .escape()
+    .isLength({ min: 10, max: 16 })
+    .withMessage("Phone number must be between 10 and 16 characters."),
+  body("open.*").escape().isLength({ min: 1 }),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    const location = new Location({
+      state: req.body.state,
+      address: req.body.address,
+      phoneNumber: req.body.phoneNumber,
+      open: req.body.open,
+      errors: errors.array(),
+    });
+    const check = await Location.find({ address: location.address }).exec();
+    if (check.length) {
+      errors.errors.push({
+        value: location.address,
+        msg: "A location with this address already exisit.",
+        param: "address",
+        location: "body",
+      });
+    }
+    if (!errors.isEmpty()) {
+      return res.render("location_form", {
+        page_title: "Create Location",
+        location: location,
+        days: daysOfWeek,
+        errors: errors,
+      });
+    } else {
+      await location.save();
+      res.redirect(location.url);
+    }
+  }),
+];
 exports.location_get_delete = asyncHandler(async (req, res, next) => {});
 exports.location_post_delete = asyncHandler(async (req, res, next) => {});
 exports.location_get_update = asyncHandler(async (req, res, next) => {});
