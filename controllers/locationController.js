@@ -1,4 +1,5 @@
 const Location = require("../models/location");
+const Store = require("../models/store");
 const debug = require("debug")("app:location");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult, param } = require("express-validator");
@@ -110,7 +111,97 @@ exports.location_post_create = [
     }
   }),
 ];
-exports.location_get_delete = asyncHandler(async (req, res, next) => {});
-exports.location_post_delete = asyncHandler(async (req, res, next) => {});
-exports.location_get_update = asyncHandler(async (req, res, next) => {});
-exports.location_post_update = asyncHandler(async (req, res, next) => {});
+exports.location_get_delete = asyncHandler(async (req, res, next) => {
+  try {
+    const location = await Location.findById(req.params.id);
+    if (!location) {
+      const err = new Error("Location not found.");
+      err.status = 404;
+      return next(err);
+    }
+    res.render("location_delete", {
+      id: location._id,
+      location: location,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+exports.location_post_delete = asyncHandler(async (req, res, next) => {
+  const store = await Store.findOneAndUpdate(
+    { locations: req.params.id },
+    { $pull: { locations: req.params.id } },
+    { new: true }
+  ).exec();
+  if (!store) {
+    const err = new Error("Store not found");
+    err.status = 404;
+    return next(err);
+  }
+  await Location.findByIdAndDelete(req.params.id);
+  res.redirect("/store/location");
+});
+exports.location_get_update = asyncHandler(async (req, res, next) => {
+  const location = await Location.findById(req.params.id).exec();
+
+  const daysOfWeekWithStatus = daysOfWeek.map((day) => ({
+    name: day,
+    checked: location.open.includes(day),
+  }));
+  res.render("location_form", {
+    page_title: "Update Location",
+    location: location,
+    days: daysOfWeek,
+  });
+});
+exports.location_post_update = [
+  (req, res, next) => {
+    if (!Array.isArray(req.body.open)) {
+      req.body.open === undefined ? [] : [req.body.open];
+    }
+    next();
+  },
+  body("state", "State is required.")
+    .trim()
+    .escape()
+    .isLength({ min: 2, max: 2 })
+    .withMessage("please abbrivate state."),
+  body("address", "Address is required.").trim().isLength({ min: 6 }).escape(),
+  body("phoneNumber")
+    .trim()
+    .escape()
+    .isLength({ min: 10, max: 16 })
+    .withMessage("Phone number must be between 10 and 16 characters."),
+  body("open.*").escape().isLength({ min: 1 }),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    const location = new Location({
+      state: req.body.state,
+      address: req.body.address,
+      phoneNumber: req.body.phoneNumber,
+      zip: req.body.zip,
+      open: req.body.open,
+      _id: req.params.id,
+    });
+    if (!errors.isEmpty()) {
+      const daysOfWeekWithStatus = daysOfWeek.map((day) => ({
+        name: day,
+        checked: updatedday.open.includes(day),
+      }));
+      res.render("location_form", {
+        page_title: "Update Location",
+        location: location,
+        errors: errors.array(),
+        days: daysOfWeekWithStatus,
+      });
+      return;
+    } else {
+      const UpdateLocation = await Location.findByIdAndUpdate(
+        location._id,
+        location,
+        {}
+      );
+      res.redirect(UpdateLocation.url);
+    }
+  }),
+];

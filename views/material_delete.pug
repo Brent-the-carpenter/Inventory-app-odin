@@ -1,0 +1,9 @@
+extends layout 
+
+block content 
+    h1 Are you sure you want to delete the following material?
+    p #{material.name}
+    form.form-container-delete(method='POST')
+        input(type='hidden', name='id', value=material._id)
+        button.btn.btn-danger(type='submit') Delete
+        a.btn.btn-secondary(href='/store/material') Cancel

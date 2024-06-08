@@ -69,6 +69,11 @@ ul {
   border-radius: 4px;
   background-color: #f9f9f9;
 }
+.form-container-delete {
+  display: flex;
+  gap: 20px;
+  width: 200px;
+}
 
 /* Form element styling */
 .form-control {
@@ -111,7 +116,10 @@ ul {
 .btn-primary:hover {
   background-color: #0056b3;
 }
-
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
 .btn-secondary {
   background-color: #6c757d;
   color: white;

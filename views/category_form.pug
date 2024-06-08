@@ -8,6 +8,10 @@ block content
       label.form-label(for='name') Name:
       input.form-input(type='text', name='name', placeholder='Name', value= category ? category.name : '', required)
 
+    div 
+      label(for='categoryid')
+      input(type='hidden', name='category_id', value= category ? category._id : '')
+
     .form-control
       label.form-label(for='summary') Summary
       textarea.form-input(name='summary', required)= category ? category.summary : ''

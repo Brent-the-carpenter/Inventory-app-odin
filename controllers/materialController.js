@@ -60,6 +60,7 @@ exports.material_post_create = [
     .escape()
     .isNumeric()
     .withMessage("Price must only contain numeric characters."),
+
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
     const material = new Material({
@@ -86,16 +87,121 @@ exports.material_post_create = [
         errors: errors.array(),
       });
     } else {
-      material.save();
+      await material.save();
+      await Category.findOneAndUpdate(
+        { _id: material.category },
+        { $push: { materials: material._id } }
+      );
+
       res.redirect(material.url);
     }
   }),
 ];
 
-exports.material_get_delete = asyncHandler(async (req, res, next) => {});
+exports.material_get_delete = asyncHandler(async (req, res, next) => {
+  const material = await Material.findById(req.params.id);
+  if (!material) {
+    const error = new Error("Material not found.");
+    console.error("Material GET_delete: material not found.", error.stack);
+    error.status = 404;
 
-exports.material_post_delete = asyncHandler(async (req, res, next) => {});
+    return next(error);
+  }
+  res.render("material_delete", {
+    id: req.params.id,
+    material: material,
+  });
+});
 
-exports.material_get_update = asyncHandler(async (req, res, next) => {});
+exports.material_post_delete = asyncHandler(async (req, res, next) => {
+  const category = await Category.findOneAndUpdate(
+    { materials: req.params.id },
+    { $pull: { materials: req.params.id } },
+    { new: true }
+  );
+  if (!category) {
+    const error = new Error("Category not found.");
+    console.error("Category not found in material delete post.", error.stack);
+    error.status = 404;
+    return next(error);
+  }
+  await Material.findByIdAndDelete(req.params.id);
+  res.redirect("/store/material");
+});
 
-exports.material_post_update = asyncHandler(async (req, res, next) => {});
+exports.material_get_update = asyncHandler(async (req, res, next) => {
+  const [material, categories] = await Promise.all([
+    Material.findById(req.params.id).exec(),
+    Category.find({}).sort({ name: 1 }).exec(),
+  ]);
+  if (!material) {
+    const error = new Error("Material not found.");
+    error.status = 404;
+    console.error("Material_Update: Material not found.", error.stack);
+    return next(error);
+  }
+
+  res.render("material_form", {
+    page_title: "Update Material",
+    material: material,
+    categories: categories,
+  });
+});
+
+exports.material_post_update = [
+  body("name", "Name of material is required.")
+    .trim()
+    .escape()
+    .isLength({ min: 3 })
+    .withMessage("Name must be at least three characters long"),
+  body("stock", " Stock is required.")
+    .escape()
+    .isNumeric()
+    .withMessage("Stock must only contain numeric characters."),
+  body("category", "Category must be seleceted.")
+    .trim()
+    .isLength({ min: 3 })
+    .escape(),
+  body("price", "Price is required.")
+    .escape()
+    .isNumeric()
+    .withMessage("Price must only contain numeric characters."),
+
+  asyncHandler(async (req, res, next) => {
+    const [material, categories] = await Promise.all([
+      Material.findById(req.params.id).exec(),
+      Category.find({}).sort({ name: 1 }).exec(),
+    ]);
+
+    const errors = validationResult(req);
+    const updatedMaterial = new Material({
+      name: req.body.name,
+      stock: req.body.stock,
+      category: req.body.category,
+      price: req.body.price,
+      _id: material._id,
+    });
+    if (!errors.isEmpty()) {
+      res.render("material_form", {
+        page_title: "Update Material",
+        material: updatedMaterial,
+        categories: categories,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      const updateMaterial = await Material.findByIdAndUpdate(
+        material._id,
+        updatedMaterial,
+        { new: true }
+      );
+      if (!updateMaterial) {
+        const error = new Error("Material not found.");
+        error.status = 404;
+        console.error("Material_Update: Material not found.", error.stack);
+        return next(error);
+      }
+      res.redirect(updatedMaterial.url);
+    }
+  }),
+];
