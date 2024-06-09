@@ -14,7 +14,7 @@ const debugDB = require("debug")("app:db");
 const mongoDB = process.env.MONGO_URI;
 
 const app = express();
-
+app.set("trust proxy", 1);
 // Set up rate limit
 const limiter = RateLimit({
   windowMS: 1 * 60 * 1000,
