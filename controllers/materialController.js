@@ -24,6 +24,7 @@ exports.material_detail = asyncHandler(async (req, res, next) => {
     err.status = 404;
     return next(err);
   }
+
   res.render("material_detail", {
     page_title: "Material Details",
     material: material,
@@ -45,7 +46,7 @@ exports.material_get_create = asyncHandler(async (req, res, next) => {
 exports.material_post_create = [
   body("name", "Name of material is required.")
     .trim()
-    .escape()
+    .customSanitizer((value) => customEscape(value))
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long"),
   body("stock", " Stock is required.")
@@ -63,11 +64,19 @@ exports.material_post_create = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
+    const { originalname, buffer, mimetype } = req.file || {};
     const material = new Material({
       name: req.body.name,
       stock: req.body.stock,
       category: req.body.category,
       price: req.body.price,
+      image: req.file
+        ? {
+            data: buffer,
+            contentType: mimetype,
+            fileName: originalname,
+          }
+        : undefined,
     });
     const checkName = await Material.find({ name: material.name }).exec();
     if (checkName.length) {
@@ -151,7 +160,7 @@ exports.material_get_update = asyncHandler(async (req, res, next) => {
 exports.material_post_update = [
   body("name", "Name of material is required.")
     .trim()
-    .escape()
+    .customSanitizer((value) => customEscape(value))
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long"),
   body("stock", " Stock is required.")
@@ -172,13 +181,20 @@ exports.material_post_update = [
       Material.findById(req.params.id).exec(),
       Category.find({}).sort({ name: 1 }).exec(),
     ]);
-
+    console.log(material);
     const errors = validationResult(req);
     const updatedMaterial = new Material({
       name: req.body.name,
       stock: req.body.stock,
       category: req.body.category,
       price: req.body.price,
+      image: req.file
+        ? {
+            data: req.file.buffer,
+            contentType: req.file.mimetype,
+            fileName: req.file.originalname,
+          }
+        : material.image,
       _id: material._id,
     });
     if (!errors.isEmpty()) {
@@ -205,3 +221,15 @@ exports.material_post_update = [
     }
   }),
 ];
+
+exports.material_get_image = asyncHandler({});
+
+// custom escape for material name
+const customEscape = (str) => {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+};

@@ -10,6 +10,7 @@ const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const storeRouter = require("./routes/store");
 const compression = require("compression");
+
 const debugDB = require("debug")("app:db");
 const mongoDB = process.env.MONGO_URI;
 const app = express();

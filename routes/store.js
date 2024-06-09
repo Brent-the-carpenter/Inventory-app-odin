@@ -5,7 +5,13 @@ const router = express.Router();
 const category_controller = require("../controllers/categoryController");
 const location_controller = require("../controllers/locationController");
 const material_controller = require("../controllers/materialController");
+const store = require("../models/store");
 
+const multer = require("multer");
+
+// Configure Multer to store files in memory
+const storage = multer.memoryStorage();
+const Upload = multer({ storage: storage });
 /// CATEGORY ROUTES ///
 
 // GET/POST request for creating category
@@ -50,7 +56,11 @@ router.get("/location", location_controller.location_list);
 
 // GET/POST request for creating material.
 router.get("/material/create", material_controller.material_get_create);
-router.post("/material/create", material_controller.material_post_create);
+router.post(
+  "/material/create",
+  Upload.single("upload_file"),
+  material_controller.material_post_create
+);
 
 // GET/POST request for deleting material
 router.get("/material/:id/delete", material_controller.material_get_delete);
@@ -58,7 +68,11 @@ router.post("/material/:id/delete", material_controller.material_post_delete);
 
 // GET/POST request for updating material
 router.get("/material/:id/update", material_controller.material_get_update);
-router.post("/material/:id/update", material_controller.material_post_update);
+router.post(
+  "/material/:id/update",
+  Upload.single("upload_file"),
+  material_controller.material_post_update
+);
 
 // GET single material
 router.get("/material/:id", material_controller.material_detail);

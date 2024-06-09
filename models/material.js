@@ -7,6 +7,11 @@ const MaterialSchema = new Schema({
   stock: { type: Number, required: true },
   category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   price: { type: Number, required: true },
+  image: {
+    data: Buffer,
+    contentType: String,
+    fileName: String,
+  },
 });
 
 MaterialSchema.virtual("url").get(function () {

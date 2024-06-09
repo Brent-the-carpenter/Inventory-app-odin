@@ -1,21 +1,29 @@
-extends layout 
+extends layout
 
-block content 
-    h1=page_title 
-   
-    div.material-detail 
-    h2 Name: #{material.name}
-    if(material)
+block content
+  h1= page_title
 
-        ul 
-            li #[strong Category:] 
-                |&nbsp;
-                a(href=material.category.url) #{material.category.name}
-                li #{material.stock} units in stock 
-                li $#{material.price} per unit
-    else 
-        p Material not found
-    p 
-        a(href=`${material.url}/update`) Update Material   
-    p 
+  if material
+    div.material-detail
+      h2 Name: #{material.name}
+      
+      if material && material.image && material.image.data
+        img(src=`data:${material.image.contentType};base64,${material.image.data.toString('base64')}`, alt=material.name)
+      
+      ul
+        li
+          strong Category:
+          |&nbsp;
+          a(href=material.category.url) #{material.category.name}
+        
+        li #{material.stock} units in stock
+        li $#{material.price} per unit
+
+      p
+        a(href=`${material.url}/update`) Update Material
+
+      p
         a(href=`${material.url}/delete`) Delete Material
+
+  else
+    p Material not found
