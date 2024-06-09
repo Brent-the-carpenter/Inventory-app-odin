@@ -1,11 +1,19 @@
-const category = require("../models/category");
 const Category = require("../models/category");
 const Material = require("../models/material");
 const asyncHandler = require("express-async-handler");
-const { body, validationResult, param } = require("express-validator");
+const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:material");
+const uploadImage = require("../cloudinary").uploadImage;
 
-const title = "The Better Choice for Building Material";
+const customEscape = (str) => {
+  return str
+    .replace(/&/g, "&amp")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&qout;")
+    .replace(/'/g, "&#39;");
+};
+
 exports.material_list = asyncHandler(async (req, res, next) => {
   const material_list = await Material.find({}).sort({ name: 1 }).exec();
   debug(material_list);
@@ -31,10 +39,7 @@ exports.material_detail = asyncHandler(async (req, res, next) => {
 });
 
 exports.material_get_create = asyncHandler(async (req, res, next) => {
-  const categories = await Category.find({})
-    .sort({ name: 1 })
-    .populate("materials")
-    .exec();
+  const categories = await Category.find({}).sort({ name: 1 }).exec();
 
   res.render("material_form", {
     page_title: "Create Material",
@@ -45,17 +50,14 @@ exports.material_get_create = asyncHandler(async (req, res, next) => {
 exports.material_post_create = [
   body("name", "Name of material is required.")
     .trim()
-    .escape()
+    .customSanitizer((value) => customEscape(value))
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long"),
   body("stock", " Stock is required.")
     .escape()
     .isNumeric()
     .withMessage("Stock must only contain numeric characters."),
-  body("category", "Category must be seleceted.")
-    .trim()
-    .isLength({ min: 3 })
-    .escape(),
+  body("category", "Category must be selected.").trim().escape(),
   body("price", "Price is required.")
     .escape()
     .isNumeric()
@@ -63,21 +65,41 @@ exports.material_post_create = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
+    const { file } = req;
+    let uploadResult;
+
+    if (file) {
+      try {
+        // Upload to Cloudinary
+        uploadResult = await uploadImage(file.buffer);
+      } catch (error) {
+        return next(error);
+      }
+    }
+
     const material = new Material({
       name: req.body.name,
       stock: req.body.stock,
       category: req.body.category,
       price: req.body.price,
+      image: uploadResult
+        ? {
+            url: uploadResult.secure_url,
+            public_id: uploadResult.public_id,
+          }
+        : undefined,
     });
+
     const checkName = await Material.find({ name: material.name }).exec();
     if (checkName.length) {
       errors.errors.push({
         value: material.name,
-        msg: "Material with this name already exsist.",
+        msg: "Material with this name already exists.",
         param: "name",
         location: "body",
       });
     }
+
     if (!errors.isEmpty()) {
       const categories = await Category.find({}).sort({ name: 1 }).exec();
       return res.render("material_form", {
@@ -151,37 +173,50 @@ exports.material_get_update = asyncHandler(async (req, res, next) => {
 exports.material_post_update = [
   body("name", "Name of material is required.")
     .trim()
-    .escape()
+    .customSanitizer((value) => customEscape(value))
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long"),
   body("stock", " Stock is required.")
     .escape()
     .isNumeric()
     .withMessage("Stock must only contain numeric characters."),
-  body("category", "Category must be seleceted.")
-    .trim()
-    .isLength({ min: 3 })
-    .escape(),
+  body("category", "Category must be selected.").trim().escape(),
   body("price", "Price is required.")
     .escape()
     .isNumeric()
     .withMessage("Price must only contain numeric characters."),
 
   asyncHandler(async (req, res, next) => {
-    const [material, categories] = await Promise.all([
-      Material.findById(req.params.id).exec(),
-      Category.find({}).sort({ name: 1 }).exec(),
-    ]);
-
     const errors = validationResult(req);
-    const updatedMaterial = new Material({
+    const { file } = req;
+    let uploadResult;
+
+    if (file) {
+      try {
+        // Upload to Cloudinary
+        uploadResult = await uploadImage(file.buffer);
+      } catch (error) {
+        return next(error);
+      }
+    }
+
+    const updatedMaterial = {
       name: req.body.name,
       stock: req.body.stock,
       category: req.body.category,
       price: req.body.price,
-      _id: material._id,
-    });
+      _id: req.params.id, // This is required, or a new ID will be assigned!
+    };
+
+    if (uploadResult) {
+      updatedMaterial.image = {
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+      };
+    }
+
     if (!errors.isEmpty()) {
+      const categories = await Category.find({}).sort({ name: 1 }).exec();
       res.render("material_form", {
         page_title: "Update Material",
         material: updatedMaterial,
@@ -191,7 +226,7 @@ exports.material_post_update = [
       return;
     } else {
       const updateMaterial = await Material.findByIdAndUpdate(
-        material._id,
+        req.params.id,
         updatedMaterial,
         { new: true }
       );
@@ -201,7 +236,7 @@ exports.material_post_update = [
         console.error("Material_Update: Material not found.", error.stack);
         return next(error);
       }
-      res.redirect(updatedMaterial.url);
+      res.redirect(updateMaterial.url);
     }
   }),
 ];

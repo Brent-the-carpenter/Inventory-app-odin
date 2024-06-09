@@ -19,10 +19,22 @@ block content
         hr
     else
         p #[strong No material in this category.]
-    p
-        a(href=`/store/category/${category._id}/update`) Update Category
+    form(action="/store/verify-password", method="POST")
+        input(type="hidden", name="id", value=`${category._id}`)
+        input(type="hidden", name="action", value="update")
+        input(type="hidden", name="path", value=`${category.url}`)
+        .form-control
+            label(for="adminPassword") Admin Password:
+            input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
+        button.btn.btn-primary(type="submit") Update Category
     
-    p
-        a(href=`/store/category/${category._id}/delete`) Delete Category
+    form(action="/store/verify-password", method="POST")
+        input(type="hidden", name="categoryId", value=`${category._id}`)
+        input(type="hidden", name="action", value="delete")
+        input(type="hidden", name="path", value=`${category.url}`)
+        .form-control
+            label(for="adminPassword") Admin Password:
+            input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
+        button.btn.btn-danger(type="submit") Delete Category
         
 

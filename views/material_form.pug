@@ -3,7 +3,7 @@ extends layout
 block content
   h1= page_title
 
-  form.form-container(method='POST')
+  form.form-container(method='POST', enctype='multipart/form-data') 
     .form-control 
       label.form-label(for='name') Name:
       input.form-input(type='text', name='name', placeholder='Name', value=(undefined=== material ? '':material.name), required)
@@ -15,6 +15,10 @@ block content
     .form-control
       label.form-label(for='price') Price:
       input.form-input(type='number', name='price', placeholder='Price', value= (undefined===material ?  '' : material.price), required)
+
+    .form-control 
+      label.form-label(for='image') Image:
+      input.form-input(type='file', name='image', placeholder='Image', accept='image/*')
 
     .form-control
       label.form-label(for='category') Category:

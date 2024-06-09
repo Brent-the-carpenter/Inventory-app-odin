@@ -12,6 +12,7 @@ const storeRouter = require("./routes/store");
 const compression = require("compression");
 const debugDB = require("debug")("app:db");
 const mongoDB = process.env.MONGO_URI;
+
 const app = express();
 
 // Set up rate limit
@@ -30,7 +31,16 @@ async function main() {
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "img-src": ["'self'", "data", "https://res.cloudinary.com/dy0sflvdv/"],
+      },
+    },
+  })
+);
 app.use(limiter);
 app.use(logger("dev"));
 app.use(express.json());

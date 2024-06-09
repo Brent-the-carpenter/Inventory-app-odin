@@ -25,9 +25,22 @@ block content
             
   else
     p This location is closed for the time being.
-  div 
-    p
-      a(href=`${location.url}/update`) Update Location
-    p
-      a(href=`${location.url}/delete`) Delete Location
+    
+  form(action="/store/verify-password", method="POST")
+    input(type="hidden", name="id", value=`${location._id}`)
+    input(type="hidden", name="action", value="update")
+    input(type="hidden", name="path", value=`${location.url}`)
+    .form-control
+      label(for="adminPassword") Admin Password:
+      input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
+    button.btn.btn-primary(type="submit") Update Location
+
+  form(action="/store/verify-password", method="POST")
+    input(type="hidden", name="locationId", value=`${location._id}`)
+    input(type="hidden", name="action", value="delete")
+    input(type="hidden", name="path", value=`${location.url}`)
+    .form-control
+      label(for="adminPassword") Admin Password:
+      input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
+    button.btn.btn-danger(type="submit") Delete Location
 
