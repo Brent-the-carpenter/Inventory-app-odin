@@ -18,7 +18,7 @@ app.set("trust proxy", 1);
 // Set up rate limit
 const limiter = RateLimit({
   windowMS: 1 * 60 * 1000,
-  max: 20,
+  max: 100,
 });
 
 // Set up mongoose
