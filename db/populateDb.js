@@ -43,11 +43,20 @@ async function main() {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
   });
-
   try {
     await client.connect();
-    Console.log(`Successfully connected to DB.`);
+    console.log(`Successfully connected to DB.`);
+    await insertDataIntoPostgres(client);
+  } catch (error) {
+    console.log(`Failed to connect to postgres db. ERROR: ${error}`);
+  } finally {
+    await client.end();
+    console.log(`Connection closed.`);
+  }
+}
 
+async function insertDataIntoPostgres(client) {
+  try {
     // Set up table schemas
     const tableSchemas = path.join(__dirname, "schemas/tables.sql");
     const tableCreation = await fs.readFile(tableSchemas, "utf-8");
@@ -106,9 +115,10 @@ async function main() {
       const storeName = category.store.name;
 
       if (storeName) {
-        const result = client.query(`SELECT id FROM stores WHERE name = $1`, [
-          storeName,
-        ]);
+        const result = await client.query(
+          `SELECT id FROM stores WHERE name = $1`,
+          [storeName]
+        );
         const store_id = result.rows[0]?.id;
         if (store_id) {
           await client.query(
@@ -124,12 +134,49 @@ async function main() {
       }
     }
 
+    // Migrate materials into the db =)
+
+    for (const material of materials) {
+      const materialCategory = material.category.name;
+
+      if (materialCategory) {
+        const result = await client.query(
+          `SELECT id FROM categories WHERE name = $1`,
+          [materialCategory]
+        );
+        const category_id = result.rows[0]?.id;
+        if (category_id) {
+          await client.query(
+            `INSERT INTO materials(mat_name , stock , price , category_id , img_url , img_id)
+      VALUES($1 ,$2,$3, $4 , $5, $6)`,
+            [
+              material.name,
+              material.stock,
+              material.price,
+              category_id,
+              material.image.url,
+              material.image.public_id,
+            ]
+          );
+        } else {
+          console.log(`No category with id ${category_id} found`);
+        }
+      } else {
+        console.log(`No category with name: ${materialCategory} found.`);
+      }
+    }
+
     await client.query(`COMMIT`);
   } catch (error) {
     console.log(`Error populating db ${error}`);
     await client.query(`ROLLBACK`);
-  } finally {
-    await client.end();
-    console.log(`Connection closed.`);
   }
 }
+
+async function startMigration() {
+  await getDataFromMongoDb();
+  await main();
+  console.log(`Migration completed!`);
+}
+
+startMigration();
