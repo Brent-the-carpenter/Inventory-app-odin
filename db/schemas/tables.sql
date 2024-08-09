@@ -5,7 +5,7 @@ CREATE TABLE stores(
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY , 
     name VARCHAR(50) NOT NULL , 
     date_opened DATE NOT NULL  
-)
+);
 
 -- Create categories table
 CREATE TABLE categories (
