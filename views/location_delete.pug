@@ -2,9 +2,9 @@ extends layout
 
 block content 
     h1 Are you sure you want to delete the following location?
-    p #{location.address} , #{location.state} #{location.zip ? location.zip : ''}
+    p #{location.address} , #{location.state} #{location.zip_code ? location.zip_code : ''}
     form.form-container-delete(method='POST')
-        input(type='hidden', name='id', value=location._id)
+        input(type='hidden', name='id', value=location.id)
         button.btn.btn-danger(type='submit') Delete
         a.btn.btn-secondary(href='/store/location') Cancel
 

@@ -5,47 +5,78 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:category");
 
-exports.category_list = asyncHandler(async (req, res, next) => {
-  const category_list = await Category.find({}).exec();
+const {
+  getAllRows,
+  getRow,
+  getMaterialInCategory,
+  checkForCategory,
+  addCategory,
+  checkForMaterial,
+  checkForLinkedMaterials,
+  deleteCategory,
+  updateCategory,
+} = require("../db/quires");
 
-  res.render("category_list", {
-    page_title: "Categories",
-    category_list: category_list,
-  });
+//✅
+exports.category_list = asyncHandler(async (req, res, next) => {
+  // const category_list = await Category.find({}).exec();
+  try {
+    const categories = await getAllRows("categories");
+    if (categories.length > 0) {
+      console.log(categories);
+      return res.render("category_list", {
+        page_title: "categories",
+        category_list: categories,
+      });
+    } else {
+      console.log(categories);
+      return res.render("category_list", {
+        page_title: "Categories",
+        category_list: null,
+        message: "No categories found.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.render("category_list", {
+      page_title: "Categories",
+      error: error.message,
+    });
+  }
 });
 
+//✅
 exports.category_detail = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id)
-    .populate({ path: "materials", options: { sort: { name: 1 } } })
-    .exec();
+  const category = await getRow("categories", req.params.id);
+  const materials = await getMaterialInCategory(req.params.id);
+  const store = await getRow("stores", category.store_id);
   if (!category) {
     const err = new Error("Category not found.");
     err.status = 404;
     return next(err);
   }
-  res.render("category_detail", {
+  return res.render("category_detail", {
     page_title: "Category Detail",
     category: category,
-    materials: category.materials,
+    materials: materials.length > 0 ? materials : null,
+    store,
   });
 });
 
+//✅
 exports.category_create_get = asyncHandler(async (req, res, next) => {
   debug("We are in the route controller");
-  const [materials, store] = await Promise.all([
-    Material.find({}).sort({ name: 1 }).exec(),
-    Store.findOne({}).exec(),
-  ]);
-  debug(store._id);
+  const stores = await getAllRows("stores");
+  debug(stores);
   res.render("category_form", {
     page_title: "Create Category",
-    materials: materials,
-    store: store,
+    stores,
   });
 });
 
+//✅
 exports.category_create_post = [
-  body("name", "Name is a required field.")
+  body("cat_name", "Name is a required field.")
     .trim()
     .escape()
     .isLength({ min: 3 })
@@ -57,165 +88,139 @@ exports.category_create_post = [
     .escape()
     .isLength({ min: 10, max: 300 })
     .withMessage("Summary must be between 10 and 200 characters."),
-  body("store").trim().escape(),
-  body("material.*").escape(),
+  body("store_id").trim().escape().toInt(),
+
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const category = new Category({
-      name: req.body.name,
-      summary: req.body.summary,
-      materials: req.body.material,
-      store: req.body.store,
-    });
-    const checkForCategoryName = await Category.find({
-      name: category.name,
-    }).exec();
-    if (checkForCategoryName.length) {
+    const { cat_name, summary, store_id } = req.body;
+    const category = {
+      cat_name,
+      summary,
+      store_id,
+    };
+    const checkForCategoryName = await checkForCategory(category.cat_name);
+    if (checkForCategoryName?.cat_name === category.cat_name) {
       errors.errors.push({
-        value: category.name,
+        value: category.cat_name,
         msg: "Category with this name already exists",
         param: "name",
         location: "body",
       });
     }
     if (!errors.isEmpty()) {
-      const materials = await Material.find({}).sort({ name: 1 }).exec();
+      const stores = await getAllRows("stores");
 
-      for (const material of materials) {
-        if (
-          category.materials.some(
-            (catMaterial) =>
-              catMaterial._id.toString() === material._id.toString()
-          )
-        ) {
-          material.checked = true;
-        }
-      }
-      debug("we get to here in the function", errors);
       return res.render("category_form", {
         page_title: "Create Category",
-        materials: materials,
+        stores,
         category: category,
         errors: errors.array(),
       });
     } else {
-      await category.save();
-
-      res.redirect(category.url);
+      const newCategory = await addCategory(category);
+      if (!newCategory) {
+        console.error(`Error adding new category: ${category}.`);
+        return next(createError(500, `Internal server error.`));
+      }
+      return res.redirect(`/store/category/${newCategory.id}`);
     }
   }),
 ];
-
+//✅
 exports.category_get_delete = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id)
-    .populate("materials")
-    .exec();
+  const category = await getRow("categories", req.params.id);
+
   res.render("category_delete", {
     id: req.params.id,
     category: category,
   });
 });
-
+//✅
 exports.category_post_delete = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.body.id)
-    .populate("materials")
-    .exec();
-  if (category.materials.length) {
+  const materialsLinkedToCat = await checkForLinkedMaterials(req.params.id);
+  const category = await getRow("categories", req.params.id);
+  console.log(materialsLinkedToCat);
+  if (materialsLinkedToCat.length > 0) {
     return res.render("category_delete", {
       id: req.params.id,
       category: category,
+      materialsLinkedToCat,
     });
   } else {
-    await Category.findByIdAndDelete(req.params.id);
-    res.redirect("/store/category");
+    const result = await deleteCategory(category.id);
+    if (!result) {
+      return next(
+        createError(500, `Failed to delete category: ${category.name}`)
+      );
+    }
+    return res.redirect("/store/category");
   }
 });
 
+//✅
 exports.category_get_update = asyncHandler(async (req, res, next) => {
-  const [category, store, materials] = await Promise.all([
-    Category.findById(req.params.id).populate("materials").exec(),
-    Store.findOne({ categories: { $in: [req.params.id] } }).exec(),
-    Material.find({}, "name").sort({ name: 1 }).exec(),
-  ]);
+  const category = await getRow("categories", req.params.id);
+  const stores = await getAllRows("stores");
+
   if (!category) {
     const error = new Error("Category not found");
     err.status = 404;
     console.error("Category_update: category not found. ", error.stack);
     return next(error);
   }
-  if (!store) {
+  if (!stores) {
     const error = new Error("Store not found");
     err.status = 404;
     console.error("Category_update: store not found. ", error.stack);
     return next(error);
   }
-  for (const material of materials) {
-    if (
-      category.materials.some(
-        (catMaterial) => catMaterial._id.toString() === material._id.toString()
-      )
-    )
-      material.checked = true;
-  }
-  res.render("category_form", {
+
+  return res.render("category_form", {
     page_title: "Update Category",
     category: category,
-    store: store,
-    materials: materials,
+    stores,
   });
 });
 
+//✅
 exports.category_post_update = [
-  (req, res, next) => {
-    if (!Array.isArray(req.body.material)) {
-      req.body.material =
-        typeof req.body.material === undefined ? [] : [req.body.material];
-    }
-    next();
-  },
-  body("name", "Name is a required field.")
+  body("cat_name", "Name is a required field.")
     .trim()
     .escape()
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long.")
     .isAlpha()
-    .withMessage("Name must only contain Alpha Charecters."),
+    .withMessage("Name must only contain Alpha Characters."),
   body("summary", "Summary of category is Required.")
     .trim()
     .escape()
     .isLength({ min: 10, max: 300 })
     .withMessage("Summary must be between 10 and 200 characters."),
-  body("store").trim().escape(),
-  body("material.*").escape(),
+  body("store_id").trim().escape().toInt(),
+
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const category = new Category({
-      name: req.body.name,
-      summary: req.body.name,
-      materials: req.body.material,
-      store: req.body.store,
-      _id: req.body.category_id,
-    });
+    const { cat_name, summary, store_id } = req.body;
+    const category = {
+      cat_name,
+      summary,
+      store_id,
+    };
     if (!errors.isEmpty()) {
-      const materials = Material.find({}, "name").sort({ name: 1 }).exec();
-      for (const material in materials) {
-        if (category && category.materials.includes(material._id.toString())) {
-          material.checked = true;
-        }
-      }
+      const stores = await getAllRows("stores");
+
       res.render("category_create", {
         category: category,
         page_title: "Update Category",
-        materials: materials,
+        stores,
       });
       return;
     } else {
-      const UpdatedCategory = await Category.findByIdAndUpdate(
-        category._id,
-        category,
-        {}
-      ).exec();
-      res.redirect(UpdatedCategory.url);
+      const updatedCategory = await updateCategory(category, req.params.id);
+      if (!updateCategory) {
+        return next(createError(500, `Failed to update category:${cat_name}`));
+      }
+      return res.redirect(`/store/category/${updatedCategory.id}`);
     }
   }),
 ];

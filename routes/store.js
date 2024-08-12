@@ -92,7 +92,11 @@ router.get("/location", location_controller.location_list);
 
 // GET/POST request for creating material.
 router.get("/material/create", material_controller.material_get_create);
-router.post("/material/create", material_controller.material_post_create);
+router.post(
+  "/material/create",
+  upload.single("image"),
+  material_controller.material_post_create
+);
 
 // GET/POST request for deleting material
 router.get(

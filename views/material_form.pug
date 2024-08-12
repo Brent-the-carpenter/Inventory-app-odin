@@ -5,29 +5,29 @@ block content
 
   form.form-container(method='POST', enctype='multipart/form-data') 
     .form-control 
-      label.form-label(for='name') Name:
-      input.form-input(type='text', name='name', placeholder='Name', value=(undefined=== material ? '':material.name), required)
+      label.form-label(for='mat_name') Name:
+      input.form-input(type='text', name='mat_name', placeholder='Name', value=(material ? material.mat_name : ''), required)
 
     .form-control 
       label.form-label(for='stock') Stock:
-      input.form-input(type='number', name='stock', placeholder='Stock', value= (undefined===material ? '':material.stock ), required)
+      input.form-input(type='number', name='stock', placeholder='Stock', value= ( material ? material.stock : '' ), required)
 
     .form-control
       label.form-label(for='price') Price:
-      input.form-input(type='number', name='price', placeholder='Price', value= (undefined===material ?  '' : material.price), required)
+      input.form-input(type='number', name='price', placeholder='Price', value= (material ?  material.price : ''), required)
 
     .form-control 
       label.form-label(for='image') Image:
       input.form-input(type='file', name='image', placeholder='Image', accept='image/*')
 
     .form-control
-      label.form-label(for='category') Category:
-      select.form-input(name='category', required)
+      label.form-label(for='category_id') Category:
+      select.form-input(name='category_id', required)
         each category in categories
-          if material && material.category && category._id.toString() === material.category._id.toString()
-            option(value=category._id, selected)= category.name
+          if material && material.category_id && category.id.toString() === material.category_id.toString()
+            option(value=category.id, selected)= category.cat_name
           else
-            option(value=category._id)= category.name
+            option(value=category.id)= category.cat_name
 
     button.btn.btn-primary(type='submit') Submit
 

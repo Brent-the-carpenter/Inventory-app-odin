@@ -4,7 +4,8 @@ block content
   h2= page_title
 
   div 
-      
+    if(error)
+      p= error    
    
     hr
   div
@@ -13,7 +14,7 @@ block content
         ul 
             each category in category_list
                 li 
-                    a(href=category.url) #{category.name}
+                    a(href=`/store/category/${category.id}`) #{category.cat_name}
                     p #{category.summary}
                     hr    
     else

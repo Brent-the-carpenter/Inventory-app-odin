@@ -8,8 +8,6 @@ cloudinary.config({
   secure: true, // Ensure this line is correct and placed properly
 });
 
-console.log(cloudinary.config());
-
 exports.uploadImage = async (fileBuffer) => {
   try {
     const uploadResult = await new Promise((resolve, reject) => {

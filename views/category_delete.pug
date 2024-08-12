@@ -1,18 +1,18 @@
 extends layout 
 
 block content 
-    if(category.materials.length > 0)
-        h1 To delete the #{category.name}, you must first delete the following materials in the #{category.name} category:
+    if( materialsLinkedToCat && materialsLinkedToCat.length > 0)
+        h1 To delete the #{category.cat_name}, you must first delete the following materials in the #{category.cat_name} category:
         ul
-            each material in category.materials
+            each material in materialsLinkedToCat
                 li 
-                    a(href=`/store/material/${material._id}`) #{material.name}
+                    a(href=`/store/material/${material.id}`) #{material.mat_name}
     else 
 
-        h1 Are you sure you want to delete #{category.name}?
+        h1 Are you sure you want to delete #{category.cat_name}?
         p= category.summary
         form.form-container-delete(method='POST')
            
-            input(type='hidden', name='id', value=category._id)
+            input(type='hidden', name='id', value=category.id)
             button.btn.btn-danger(type='submit') Delete
             a.btn.btn-secondary(href='/store/category') Cancel

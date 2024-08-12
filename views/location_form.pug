@@ -11,7 +11,7 @@ block content
 
     .form-control 
       label.form-label(for='zip') Zip Code:
-      input.form-input(type='text', name='zip', placeholder='Zip Code', value= location && location.zip ? location.zip : '', required)
+      input.form-input(type='text', name='zip', placeholder='Zip Code', value= location && location.zip_code ? location.zip_code : '', required)
 
     .form-control 
       label.form-label(for='state') State:
@@ -19,7 +19,7 @@ block content
 
     .form-control
       label.form-label(for='phoneNumber') Phone Number:
-      input.form-input(type='text', name='phoneNumber', placeholder='Phone Number', value= location ? location.phoneNumber : '', required)
+      input.form-input(type='text', name='phoneNumber', placeholder='Phone Number', value= location ? location.phone_number : '', required)
 
     .form-control
       label.form-label Open Days:
@@ -36,7 +36,12 @@ block content
           div
             input.form-input(type='checkbox', name='open', value=day)
             label(for=day) #{day}
-
+    div
+      if(stores)
+        label.form-label Select store:
+        select(name="store_id") 
+          for store in stores 
+            option(value=store.id)  #{store.name} 
     button.btn.btn-primary(type='submit') Submit
 
   if errors

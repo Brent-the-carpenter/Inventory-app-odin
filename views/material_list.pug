@@ -10,7 +10,7 @@ block content
       each material in material_list
         div
           p
-            a(href=material.url) #{material.name}
+            a(href=`/store/material/${material.id}`) #{material.mat_name}
         
     else
       p No materials found.
