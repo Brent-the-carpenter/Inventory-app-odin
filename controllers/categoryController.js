@@ -5,13 +5,30 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:category");
 
-exports.category_list = asyncHandler(async (req, res, next) => {
-  const category_list = await Category.find({}).exec();
+const { categoriesGetAll } = require("../db/quires");
 
-  res.render("category_list", {
-    page_title: "Categories",
-    category_list: category_list,
-  });
+exports.category_list = asyncHandler(async (req, res, next) => {
+  // const category_list = await Category.find({}).exec();
+  try {
+    const categories = await GetAllRows("categories");
+    if (categories.length > 0) {
+      res.render("category_list", {
+        page_title: "Categories",
+        category_list: categories,
+      });
+    } else {
+      res.render("category_list", {
+        page_title: "Categories",
+        category_list: null,
+        message: "No categories found.",
+      });
+    }
+  } catch (error) {
+    res.render("category_list", {
+      page_title: "Categories",
+      error: error.message,
+    });
+  }
 });
 
 exports.category_detail = asyncHandler(async (req, res, next) => {
