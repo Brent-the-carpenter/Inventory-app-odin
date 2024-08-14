@@ -5,25 +5,25 @@ block content
 
   if (material)
     div.material-detail
-      h2 Name: #{material.name}
+      h2 Name: #{material.mat_name}
       ul
         li
           strong Category:
           |&nbsp;
-          a(href=material.category.url) #{material.category.name}
-        if material.image && material.image.url
+          a(href=`/store/category/${category.id}`) #{category.cat_name}
+        if material.img_url && material.img_id
           li
            
-            img(src=`${material.image.url}`, alt=material.name, width='200')
+            img(src=`${material.img_url}`, alt=material.img_id, width='200')
         li #{material.stock} units in stock
         li $#{material.price} per unit
   else
     p Material not found
   
   form(action=`/store/verify-password`, method='POST',) 
-    input(type='hidden', name='id', value=`${material._id}`)
+    input(type='hidden', name='id', value=`${material.id}`)
     input(type='hidden', name='action', value=`update`)
-    input(type='hidden',name='path',value=`${material.url}`)
+    input(type='hidden',name='path',value=`/store/material/${material.id}`)
       
     .form-control 
         label(for='adminPassword') Admin Password:
@@ -31,9 +31,9 @@ block content
     button.btn.btn-primary(type='submit') Update Material
 
   form(action=`/store/verify-password`, method='POST') 
-    input(type='hidden', name='materialId', value=`${material._id}`)
+    input(type='hidden', name='materialId', value=`${material.id}`)
     input(type='hidden', name='action', value=`delete`)
-    input(type='hidden',name='path',value=`${material.url}`)
+    input(type='hidden',name='path',value=`/store/material/${material.id}`)
     .form-control(action=`${material.url}/delete`, method='POST') 
         label(for='adminPassword') Admin Password:
         input.form-input(type='password', name='adminPassword', placeholder='Admin Password', required)

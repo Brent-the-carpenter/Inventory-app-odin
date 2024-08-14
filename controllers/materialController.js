@@ -4,6 +4,7 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:material");
 const uploadImage = require("../cloudinary").uploadImage;
+const { getAllRows, getRow, getCategoryOfMaterial } = require("../db/quires");
 
 const customEscape = (str) => {
   return str
@@ -14,28 +15,45 @@ const customEscape = (str) => {
     .replace(/'/g, "&#39;");
 };
 
+//✅
 exports.material_list = asyncHandler(async (req, res, next) => {
-  const material_list = await Material.find({}).sort({ name: 1 }).exec();
-  debug(material_list);
-  res.render("material_list", {
-    page_title: "List of Materials",
-    material_list: material_list,
-  });
+  try {
+    const material_list = await getAllRows("materials");
+    debug(material_list);
+    return res.render("material_list", {
+      page_title: "List of Materials",
+      material_list: material_list,
+    });
+  } catch (error) {
+    console.error(
+      `Failed to retrieve all materials from db. Error: ${error.message}`
+    );
+    return next(error);
+  }
 });
 
+//✅
 exports.material_detail = asyncHandler(async (req, res, next) => {
-  const material = await Material.findById(req.params.id)
-    .populate("category")
-    .exec();
-  if (!material) {
-    const err = new Error("Material not found.");
-    err.status = 404;
-    return next(err);
+  // const material = await Material.findById(req.params.id)
+  //   .populate("category")
+  //   .exec();
+  try {
+    const material = await getRow("materials", req.params.id);
+    const category = await getCategoryOfMaterial(material.category_id);
+    if (!material) {
+      const err = new Error("Material not found.");
+      err.status = 404;
+      return next(err);
+    }
+    return res.render("material_detail", {
+      page_title: "Material Details",
+      material: material,
+      category,
+    });
+  } catch (error) {
+    console.error(`Error in material details, Error:${error.message}`);
+    next(error);
   }
-  res.render("material_detail", {
-    page_title: "Material Details",
-    material: material,
-  });
 });
 
 exports.material_get_create = asyncHandler(async (req, res, next) => {

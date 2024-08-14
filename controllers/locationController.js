@@ -3,7 +3,7 @@ const Store = require("../models/store");
 const debug = require("debug")("app:location");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult, param } = require("express-validator");
-
+const { GetAllRows, getLocationsByState } = require("../db/quires");
 const daysOfWeek = [
   "Sunday",
   "Monday",
@@ -15,19 +15,20 @@ const daysOfWeek = [
 ];
 
 exports.location_list = asyncHandler(async (req, res, next) => {
-  const count_by_state = await Location.aggregate([
-    {
-      $group: {
-        _id: "$state",
-        count: { $sum: 1 },
-        locations: { $push: "$$ROOT" },
-      },
-    },
-  ]);
+  // const count_by_state = await Location.aggregate([
+  //   {
+  //     $group: {
+  //       _id: "$state",
+  //       count: { $sum: 1 },
+  //       locations: { $push: "$$ROOT" },
+  //     },
+  //   },
+  // ]);
+  const locations = await getLocationsByState();
 
   res.render("location_list", {
     page_title: "List of all Locations",
-    count_by_state: count_by_state,
+    count_by_state: locations,
   });
 });
 exports.location_detail = asyncHandler(async (req, res, next) => {

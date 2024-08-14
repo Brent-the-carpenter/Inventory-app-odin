@@ -9,32 +9,33 @@ block content
         br
         | #{category.summary}
     hr
-    if(category.materials)
+    if(materials)
         p #[strong Material in this category]
             
             ul
-                each material in category.materials
+                each material in materials
                     li 
-                        a(href=material.url) #{material.name}
+                        a(href=`/store/material/${material.id}`) #{material.mat_name}
         hr
     else
         p #[strong No material in this category.]
     form(action="/store/verify-password", method="POST")
-        input(type="hidden", name="id", value=`${category._id}`)
+        input(type="hidden", name="id", value=`${category.id}`)
         input(type="hidden", name="action", value="update")
-        input(type="hidden", name="path", value=`${category.url}`)
+        input(type="hidden", name="path", value=`/store/category/${category.id}`)
         .form-control
             label(for="adminPassword") Admin Password:
             input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
         button.btn.btn-primary(type="submit") Update Category
     
     form(action="/store/verify-password", method="POST")
-        input(type="hidden", name="categoryId", value=`${category._id}`)
+        input(type="hidden", name="categoryId", value=`${category.id}`)
         input(type="hidden", name="action", value="delete")
-        input(type="hidden", name="path", value=`${category.url}`)
+        input(type="hidden", name="path", value=`/store/category/${category.id}`)
         .form-control
             label(for="adminPassword") Admin Password:
             input.form-input(type="password", name="adminPassword", placeholder="Admin Password", required)
         button.btn.btn-danger(type="submit") Delete Category
         
-
+    br
+    a.btn(href= '/store/category') Back to categories

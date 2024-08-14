@@ -6,11 +6,11 @@ block content
 
   if count_by_state
     each state in count_by_state
-      p There is #{state.count} locations in #{state._id}
+      p There is #{state.count } #{state.count > 1 ? "locations" : "location"} in #{state.state}
       ul
         each location in state.locations
           li Address: 
-            a(href='/store/location/'+ location._id) #{location.address}
-          li Phone number: #{location.phoneNumber}
+            a(href='/store/location/'+ location.id) #{location.address}
+          li Phone number: #{location.phone_number}
           hr
       hr    

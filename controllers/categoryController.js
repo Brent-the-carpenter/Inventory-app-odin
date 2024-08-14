@@ -5,45 +5,49 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:category");
 
-const { categoriesGetAll } = require("../db/quires");
+const { getAllRows, getRow, getMaterialInCategory } = require("../db/quires");
 
+//✅
 exports.category_list = asyncHandler(async (req, res, next) => {
   // const category_list = await Category.find({}).exec();
   try {
-    const categories = await GetAllRows("categories");
+    const categories = await getAllRows("categories");
     if (categories.length > 0) {
-      res.render("category_list", {
-        page_title: "Categories",
+      console.log(categories);
+      return res.render("category_list", {
+        page_title: "categories",
         category_list: categories,
       });
     } else {
-      res.render("category_list", {
+      console.log(categories);
+      return res.render("category_list", {
         page_title: "Categories",
         category_list: null,
         message: "No categories found.",
       });
     }
   } catch (error) {
-    res.render("category_list", {
+    console.log(error);
+    return res.render("category_list", {
       page_title: "Categories",
       error: error.message,
     });
   }
 });
 
+//✅
 exports.category_detail = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id)
-    .populate({ path: "materials", options: { sort: { name: 1 } } })
-    .exec();
+  const category = await getRow("categories", req.params.id);
+  const materials = await getMaterialInCategory(req.params.id);
   if (!category) {
     const err = new Error("Category not found.");
     err.status = 404;
     return next(err);
   }
-  res.render("category_detail", {
+  return res.render("category_detail", {
     page_title: "Category Detail",
     category: category,
-    materials: category.materials,
+    materials: materials.length > 0 ? materials : null,
   });
 });
 
