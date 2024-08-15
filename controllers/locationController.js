@@ -2,8 +2,16 @@ const Location = require("../models/location");
 const Store = require("../models/store");
 const debug = require("debug")("app:location");
 const asyncHandler = require("express-async-handler");
+const createError = require("http-errors");
 const { body, validationResult, param } = require("express-validator");
-const { GetAllRows, getLocationsByState } = require("../db/quires");
+const {
+  getRow,
+  getLocationsByState,
+  checkForLocation,
+  getAllRows,
+  addLocation,
+} = require("../db/quires");
+
 const daysOfWeek = [
   "Sunday",
   "Monday",
@@ -14,16 +22,8 @@ const daysOfWeek = [
   "Saturday",
 ];
 
+//✅
 exports.location_list = asyncHandler(async (req, res, next) => {
-  // const count_by_state = await Location.aggregate([
-  //   {
-  //     $group: {
-  //       _id: "$state",
-  //       count: { $sum: 1 },
-  //       locations: { $push: "$$ROOT" },
-  //     },
-  //   },
-  // ]);
   const locations = await getLocationsByState();
 
   res.render("location_list", {
@@ -31,17 +31,24 @@ exports.location_list = asyncHandler(async (req, res, next) => {
     count_by_state: locations,
   });
 });
+
+//✅
 exports.location_detail = asyncHandler(async (req, res, next) => {
-  const location = await Location.findById(req.params.id);
+  // const location = await Location.findById(req.params.id);
+
+  const location = await getRow("locations", req.params.id);
+  console.log(location);
   if (!location) {
     const err = new Error("Location not found.");
     err.status = 404;
     return next(err);
   }
 
+  const daysOpen = location.open.slice(1, -1).split(",");
+
   const formatted_schedule = [];
   daysOfWeek.forEach((day) => {
-    const openDay = location.open.find((openDay) => openDay === day);
+    const openDay = daysOpen.find((openDay) => openDay === day);
     if (openDay) {
       formatted_schedule.push(`${day} Open`);
     } else {
@@ -54,16 +61,27 @@ exports.location_detail = asyncHandler(async (req, res, next) => {
     formatted_schedule: formatted_schedule,
   });
 });
+
+//✅
 exports.location_get_create = asyncHandler(async (req, res, next) => {
-  res.render("location_form", {
-    page_title: "Create Location",
-    days: daysOfWeek,
-  });
+  try {
+    const stores = await getAllRows("stores");
+    return res.render("location_form", {
+      page_title: "Create Location",
+      days: daysOfWeek,
+      stores,
+    });
+  } catch (error) {
+    next(createError(500, "Error Getting location form."));
+  }
 });
+
+//✅
 exports.location_post_create = [
   (req, res, next) => {
     if (!Array.isArray(req.body.open)) {
-      typeof req.body.open === "undefined" ? [] : [req.body.open];
+      req.body.open =
+        typeof req.body.open === "undefined" ? [] : [req.body.open];
     }
     next();
   },
@@ -72,29 +90,45 @@ exports.location_post_create = [
     .trim()
     .escape()
     .isLength({ min: 2, max: 2 })
-    .withMessage("please abbrivate state."),
+    .withMessage("please abbreviate state."),
   body("address", "Address is required.").trim().isLength({ min: 6 }).escape(),
   body("phoneNumber")
     .trim()
     .escape()
     .isLength({ min: 10, max: 16 })
     .withMessage("Phone number must be between 10 and 16 characters."),
+  body("zip", "Zip code is a required field.").trim().escape(),
+  body("store_id")
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage("Please select a store."),
   body("open.*").escape().isLength({ min: 1 }),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const location = new Location({
-      state: req.body.state,
-      address: req.body.address,
-      phoneNumber: req.body.phoneNumber,
-      open: req.body.open,
+    // const location = new Location({
+    //   state: req.body.state,
+    //   address: req.body.address,
+    //   phoneNumber: req.body.phoneNumber,
+    //   open: req.body.open,
+    //   errors: errors.array(),
+    // });
+    const { state, address, phoneNumber, open, zip, store_id } = req.body;
+    const location = {
+      state,
+      address,
+      phoneNumber,
+      open,
+      zip,
+      store_id,
       errors: errors.array(),
-    });
-    const check = await Location.find({ address: location.address }).exec();
-    if (check.length) {
+    };
+    const check = await checkForLocation(address);
+    if (!check === null) {
       errors.errors.push({
         value: location.address,
-        msg: "A location with this address already exisit.",
+        msg: "A location with this address already exist.",
         param: "address",
         location: "body",
       });
@@ -107,11 +141,12 @@ exports.location_post_create = [
         errors: errors,
       });
     } else {
-      await location.save();
-      res.redirect(location.url);
+      const newLocation = await addLocation(location);
+      res.redirect(`/store/location/${newLocation.id}`);
     }
   }),
 ];
+
 exports.location_get_delete = asyncHandler(async (req, res, next) => {
   try {
     const location = await Location.findById(req.params.id);
@@ -128,6 +163,7 @@ exports.location_get_delete = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+
 exports.location_post_delete = asyncHandler(async (req, res, next) => {
   const store = await Store.findOneAndUpdate(
     { locations: req.params.id },

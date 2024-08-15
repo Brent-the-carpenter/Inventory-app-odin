@@ -68,7 +68,7 @@ exports.getMaterialInCategory = async function (id) {
 // Material specific queries
 exports.getCategoryOfMaterial = async function (id) {
   try {
-    const result = await db.query(`SELECT * FROM categories WHERE id = $1`, [
+    const result = await db.query(`SELECT * FROM categories WHERE id = $1 ;`, [
       id,
     ]);
     return result.rows[0];
@@ -91,6 +91,33 @@ exports.getLocationsByState = async function () {
     return result.rows;
   } catch (error) {
     console.error(`Error getting rows from locations , Error${error.message}`);
+    throw error;
+  }
+};
+
+exports.checkForLocation = async function (address) {
+  try {
+    const result = await db.query(
+      `SELECT * FROM locations WHERE address = $1 ; `,
+      [address]
+    );
+    console.log(result.rows);
+    return result.rows[0];
+  } catch (error) {
+    console.error(`Error checking for location . Error:${error.message}`);
+    throw error;
+  }
+};
+exports.addLocation = async function (location) {
+  try {
+    const { state, address, phoneNumber, open, zip, store_id } = location;
+    const result = await db.query(
+      `INSERT INTO locations(state , address, phone_number , open, zip_code , store_id)  VALUES($1 ,$2 , $3 , $4 , $5, $6 ) RETURNING *`,
+      [state, address, phoneNumber, open, zip, store_id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error(`Error adding location to database , Error: ${error}`);
     throw error;
   }
 };
