@@ -1,17 +1,13 @@
-const Category = require("../models/category");
-const Store = require("../models/store");
-const Material = require("../models/material");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:category");
-
+const createError = require("http-errors");
 const {
   getAllRows,
   getRow,
   getMaterialInCategory,
   checkForCategory,
   addCategory,
-  checkForMaterial,
   checkForLinkedMaterials,
   deleteCategory,
   updateCategory,
@@ -19,7 +15,6 @@ const {
 
 //✅
 exports.category_list = asyncHandler(async (req, res, next) => {
-  // const category_list = await Category.find({}).exec();
   try {
     const categories = await getAllRows("categories");
     if (categories.length > 0) {
@@ -37,11 +32,8 @@ exports.category_list = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log(error);
-    return res.render("category_list", {
-      page_title: "Categories",
-      error: error.message,
-    });
+    console.error(`Error getting list of categories , error:${error.message}`);
+    return next(createError(500, "Internal server error."));
   }
 });
 
@@ -51,9 +43,7 @@ exports.category_detail = asyncHandler(async (req, res, next) => {
   const materials = await getMaterialInCategory(req.params.id);
   const store = await getRow("stores", category.store_id);
   if (!category) {
-    const err = new Error("Category not found.");
-    err.status = 404;
-    return next(err);
+    return next(createError(404, "Category Not Found."));
   }
   return res.render("category_detail", {
     page_title: "Category Detail",
@@ -82,7 +72,7 @@ exports.category_create_post = [
     .isLength({ min: 3 })
     .withMessage("Name must be at least three characters long.")
     .isAlpha()
-    .withMessage("Name must only contain Alpha Charecters."),
+    .withMessage("Name must only contain Alpha Characters."),
   body("summary", "Summary of category is Required.")
     .trim()
     .escape()
@@ -129,8 +119,10 @@ exports.category_create_post = [
 //✅
 exports.category_get_delete = asyncHandler(async (req, res, next) => {
   const category = await getRow("categories", req.params.id);
-
-  res.render("category_delete", {
+  if (!category) {
+    return next(createError(404, "Category Not Found."));
+  }
+  return res.render("category_delete", {
     id: req.params.id,
     category: category,
   });
@@ -159,27 +151,27 @@ exports.category_post_delete = asyncHandler(async (req, res, next) => {
 
 //✅
 exports.category_get_update = asyncHandler(async (req, res, next) => {
-  const category = await getRow("categories", req.params.id);
-  const stores = await getAllRows("stores");
+  try {
+    const category = await getRow("categories", req.params.id);
+    const stores = await getAllRows("stores");
 
-  if (!category) {
-    const error = new Error("Category not found");
-    err.status = 404;
-    console.error("Category_update: category not found. ", error.stack);
-    return next(error);
-  }
-  if (!stores) {
-    const error = new Error("Store not found");
-    err.status = 404;
-    console.error("Category_update: store not found. ", error.stack);
-    return next(error);
-  }
+    if (!category) {
+      console.error("Category_update: category not found. ", error.stack);
+      return next(createError(404, "Category Not Found."));
+    }
+    if (!stores) {
+      console.error("Category_update: store not found. ", error.stack);
+      return next(createError(404, "Store Not Found."));
+    }
 
-  return res.render("category_form", {
-    page_title: "Update Category",
-    category: category,
-    stores,
-  });
+    return res.render("category_form", {
+      page_title: "Update Category",
+      category: category,
+      stores,
+    });
+  } catch (error) {
+    return next(createError(500, "Internal server error."));
+  }
 });
 
 //✅
@@ -209,12 +201,11 @@ exports.category_post_update = [
     if (!errors.isEmpty()) {
       const stores = await getAllRows("stores");
 
-      res.render("category_create", {
+      return res.render("category_create", {
         category: category,
         page_title: "Update Category",
         stores,
       });
-      return;
     } else {
       const updatedCategory = await updateCategory(category, req.params.id);
       if (!updateCategory) {

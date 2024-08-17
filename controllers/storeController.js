@@ -1,8 +1,4 @@
-const Location = require("../models/location");
-const Category = require("../models/category");
-const Material = require("../models/material");
 const asyncHandler = require("express-async-handler");
-const debug = require("debug")("app:store");
 
 const { countRows } = require("../db/quires");
 // Refactor to postgres on index done!

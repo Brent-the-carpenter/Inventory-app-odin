@@ -1,9 +1,8 @@
-const Location = require("../models/location");
-const Store = require("../models/store");
 const debug = require("debug")("app:location");
 const asyncHandler = require("express-async-handler");
 const createError = require("http-errors");
-const { body, validationResult, param } = require("express-validator");
+const { body, validationResult } = require("express-validator");
+
 const {
   getRow,
   getLocationsByState,
@@ -11,7 +10,6 @@ const {
   getAllRows,
   addLocation,
   deleteRow,
-
   updateLocation,
 } = require("../db/quires");
 
@@ -27,42 +25,46 @@ const daysOfWeek = [
 
 //✅
 exports.location_list = asyncHandler(async (req, res, next) => {
-  const locations = await getLocationsByState();
+  try {
+    const locations = await getLocationsByState();
 
-  res.render("location_list", {
-    page_title: "List of all Locations",
-    count_by_state: locations,
-  });
+    res.render("location_list", {
+      page_title: "List of all Locations",
+      count_by_state: locations,
+    });
+  } catch (error) {
+    return next(createError(500, "Internal server error."));
+  }
 });
 
 //✅
 exports.location_detail = asyncHandler(async (req, res, next) => {
-  // const location = await Location.findById(req.params.id);
-
-  const location = await getRow("locations", req.params.id);
-  console.log(location);
-  if (!location) {
-    const err = new Error("Location not found.");
-    err.status = 404;
-    return next(err);
-  }
-
-  const daysOpen = location.open.slice(1, -1).split(",");
-
-  const formatted_schedule = [];
-  daysOfWeek.forEach((day) => {
-    const openDay = daysOpen.find((openDay) => openDay === day);
-    if (openDay) {
-      formatted_schedule.push(`${day} Open`);
-    } else {
-      formatted_schedule.push(`${day} Closed`);
+  try {
+    const location = await getRow("locations", req.params.id);
+    console.log(location);
+    if (!location) {
+      return next(createError(404, "Location Not Found."));
     }
-  });
-  res.render("location_detail", {
-    page_title: "Location Details",
-    location: location,
-    formatted_schedule: formatted_schedule,
-  });
+
+    const daysOpen = location.open.slice(1, -1).split(",");
+
+    const formatted_schedule = [];
+    daysOfWeek.forEach((day) => {
+      const openDay = daysOpen.find((openDay) => openDay === day);
+      if (openDay) {
+        formatted_schedule.push(`${day} Open`);
+      } else {
+        formatted_schedule.push(`${day} Closed`);
+      }
+    });
+    return res.render("location_detail", {
+      page_title: "Location Details",
+      location: location,
+      formatted_schedule: formatted_schedule,
+    });
+  } catch (error) {
+    return next(createError(500, "Internal server error."));
+  }
 });
 
 //✅
@@ -75,7 +77,7 @@ exports.location_get_create = asyncHandler(async (req, res, next) => {
       stores,
     });
   } catch (error) {
-    next(createError(500, "Error Getting location form."));
+    return next(createError(500, "Internal server error."));
   }
 });
 
@@ -139,7 +141,10 @@ exports.location_post_create = [
       });
     } else {
       const newLocation = await addLocation(location);
-      res.redirect(`/store/location/${newLocation.id}`);
+      if (!newLocation) {
+        return next(createError(500, "Internal server error."));
+      }
+      return res.redirect(`/store/location/${newLocation.id}`);
     }
   }),
 ];
@@ -151,14 +156,14 @@ exports.location_get_delete = asyncHandler(async (req, res, next) => {
     if (!location) {
       const err = new Error("Location not found.");
       err.status = 404;
-      return next(err);
+      return next(createError(404, "Location Not Found."));
     }
-    res.render("location_delete", {
+    return res.render("location_delete", {
       id: location._id,
       location: location,
     });
   } catch (error) {
-    next(error);
+    next(createError(500, "Internal server error."));
   }
 });
 
@@ -168,26 +173,28 @@ exports.location_post_delete = asyncHandler(async (req, res, next) => {
   if (result.id) {
     return res.redirect("/store/location");
   } else {
-    const error = new Error(`Failed to delete location with id: ${id}`);
-    error.status = 500;
-    next(error);
+    return next(createError(500, "Internal server error."));
   }
 });
 
 //✅
 exports.location_get_update = asyncHandler(async (req, res, next) => {
-  const location = await getRow("locations", req.params.id);
-  const stores = await getAllRows("stores");
-  const daysOfWeekWithStatus = daysOfWeek.map((day) => ({
-    name: day,
-    checked: location.open.includes(day),
-  }));
-  res.render("location_form", {
-    page_title: "Update Location",
-    location: location,
-    days: daysOfWeek,
-    stores,
-  });
+  try {
+    const location = await getRow("locations", req.params.id);
+    const stores = await getAllRows("stores");
+    const daysOfWeekWithStatus = daysOfWeek.map((day) => ({
+      name: day,
+      checked: location.open.includes(day),
+    }));
+    return res.render("location_form", {
+      page_title: "Update Location",
+      location: location,
+      days: daysOfWeekWithStatus,
+      stores,
+    });
+  } catch (error) {
+    return next(createError(500, "Internal server error."));
+  }
 });
 
 //✅
@@ -240,7 +247,10 @@ exports.location_post_update = [
         req.params.id,
         location
       );
-      res.redirect(`/store/location/${updatedLocation.id}`);
+      if (!updateLocation) {
+        return next(createError(500, "Internal server error."));
+      }
+      return res.redirect(`/store/location/${updatedLocation.id}`);
     }
   }),
 ];

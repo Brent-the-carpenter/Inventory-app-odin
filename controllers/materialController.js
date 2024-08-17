@@ -1,9 +1,8 @@
-const Category = require("../models/category");
-const Material = require("../models/material");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const debug = require("debug")("app:material");
 const uploadImage = require("../cloudinary").uploadImage;
+const createError = require("http-errors");
 const {
   getAllRows,
   getRow,
@@ -36,23 +35,18 @@ exports.material_list = asyncHandler(async (req, res, next) => {
     console.error(
       `Failed to retrieve all materials from db. Error: ${error.message}`
     );
-    return next(error);
+    return next(createError(500, "Internal server error."));
   }
 });
 
 //✅
 exports.material_detail = asyncHandler(async (req, res, next) => {
-  // const material = await Material.findById(req.params.id)
-  //   .populate("category")
-  //   .exec();
   try {
     const material = await getRow("materials", req.params.id);
     debug("material detail ", material);
     const category = await getCategoryOfMaterial(material.category_id);
     if (!material) {
-      const err = new Error("Material not found.");
-      err.status = 404;
-      return next(err);
+      return next(createError(404, "Material not found."));
     }
     return res.render("material_detail", {
       page_title: "Material Details",
@@ -61,18 +55,22 @@ exports.material_detail = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.error(`Error in material details, Error:${error.message}`);
-    next(error);
+    return next(createError(500, "Internal server error."));
   }
 });
 
 //✅
 exports.material_get_create = asyncHandler(async (req, res, next) => {
-  const categories = await getAllRows("categories");
+  try {
+    const categories = await getAllRows("categories");
 
-  res.render("material_form", {
-    page_title: "Create Material",
-    categories: categories,
-  });
+    res.render("material_form", {
+      page_title: "Create Material",
+      categories: categories,
+    });
+  } catch (error) {
+    return next(createError(500, "Internal server error."));
+  }
 });
 
 //✅
@@ -104,7 +102,7 @@ exports.material_post_create = [
         // Upload to Cloudinary
         uploadResult = await uploadImage(file.buffer);
       } catch (error) {
-        return next(error);
+        return next(createError(500, "Internal server error."));
       }
     }
 
@@ -130,8 +128,6 @@ exports.material_post_create = [
     }
 
     if (!errors.isEmpty()) {
-      // const categories = await Category.find({}).sort({ name: 1 }).exec();
-
       const categories = await getAllRows("categories");
       return res.render("material_form", {
         page_title: "Create Material",
@@ -157,7 +153,7 @@ exports.material_get_delete = asyncHandler(async (req, res, next) => {
     console.error("Material GET_delete: material not found.", error.stack);
     error.status = 404;
 
-    return next(error);
+    return next(createError(500, "Internal server error."));
   }
   res.render("material_delete", {
     id: req.params.id,
@@ -182,7 +178,7 @@ exports.material_get_update = asyncHandler(async (req, res, next) => {
     const error = new Error("Material not found.");
     error.status = 404;
     console.error("Material_Update: Material not found.", error.stack);
-    return next(error);
+    return next(createError(500, "Internal server error."));
   }
 
   res.render("material_form", {
@@ -220,7 +216,7 @@ exports.material_post_update = [
         // Upload to Cloudinary
         uploadResult = await uploadImage(file.buffer);
       } catch (error) {
-        return next(error);
+        return next(createError(500, "Internal server error."));
       }
     }
 
@@ -249,7 +245,7 @@ exports.material_post_update = [
         const error = new Error("Material not found.");
         error.status = 404;
         console.error("Material_Update: Material not found.", error.stack);
-        return next(error);
+        return next(createError(404, `Material:${mat_name} not found.`));
       }
       return res.redirect(`/store/material/${updatedMaterial.id}`);
     }
